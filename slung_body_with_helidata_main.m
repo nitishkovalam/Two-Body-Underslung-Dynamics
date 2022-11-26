@@ -1,6 +1,6 @@
-%%GIVEN THE HELICOPTER TRAJECTORY, ACCELERATIONS OF THE LOAD AND CABLE
+%%GIVEN THE PARENT BODY TRAJECTORY, ACCELERATIONS OF THE LOAD AND CABLE
 %%FORCES OF THE SYSTEM CAN BE OBTAINED
-% Helicopter with constant forward velocity is taken
+% Body with constant forward velocity is taken
 % Input parameters required 
 % r0;v0;a0 of the helicopter
 % D (Mass of helicopter and load)
@@ -18,7 +18,7 @@ global n;    % no. of bodies (including helicopter)
 
 n=2;     % no of bodies
 
-L1=15;  % Helicopter to middle attachement point
+L1=15;  % Body to middle attachement point
 L2=4;  % Middle attachement point to ris
 
 g=9.81;
@@ -29,13 +29,11 @@ J1=0.1*[36100   0   14800;
     0   191500   0;
     14800   0   179200];        % Inertia matrix of helicopter -> does not matter for straight flight
 
-J2=[2572.71   53.15  161.08;
-      53.15   7811.00  -55.06;
-      161.08   -55.06   6596.88]; % Inertia matrix of RLV
+J2=[1000  1000  1000;
+      1000   1000  1000;
+      1000   1000   1000]; % Inertia matrix of W
 
-% Ra=[0,0;
-%     0,0;
-%     1*5.7/2,-L2-1.037];    % Position of attachment points in respective body frames
+
 
 Ra=[0,0;
     0,0;
@@ -43,10 +41,8 @@ Ra=[0,0;
 
 
 
-%load heli_vel_30.mat;     % Input Helicopter Trajectory
-%load heli_traj_with_turn.mat
-load sortie_1.mat
-load RLV_aero_coeff_CFD.mat;   % Input RLV aero coefficients
+
+
 
 % Fa.s_ref=6;
 % Fa.b_ref=3.6;
@@ -55,7 +51,7 @@ load RLV_aero_coeff_CFD.mat;   % Input RLV aero coefficients
 % Fa.Clp=-0.104;
 % Fa.l_ref=1.84;  
 
-%vel=30;        % Initial forward velocity of RLV
+%vel=30;        % Initial forward velocity of W
 vel = 0;
 ph_c=-0*pi/180; % Euler angles of cables 
 ph_l=0*pi/180;
@@ -63,10 +59,10 @@ ph_l=0*pi/180;
 r0=[Ra(1,1)+L1*sin(ph_c)+L2*sin(ph_l),0,Ra(3,1)+L1*cos(ph_c)+L2*cos(ph_l),0,ph_l,0];
 v0=[vel,0,0,0,0,0];   
 
-% r0 = [r_RLV_x,n , r_RLV_y,n , r_RLV_z,n , phi , theta , psi]
-% v0 = [v_RLV_x,n , v_RLV_y,n , v_RLV_z,n , omga_RLV_x,rlv , omga_RLV_y,rlv , omga_RLV_z,rlv]
+% r0 = [r_W_x,n , r_W_y,n , r_W_z,n , phi , theta , psi]
+% v0 = [v_W_x,n , v_W_y,n , v_W_z,n , omga_W_x,w , omga_W_y,w , omga_W_z,w]
 % ,n -> inertial frame
-% ,RLV -> RLB body frame
+% ,W -> RLB body frame
 % Euler angles are between body frame and inertial frame
 
 %tspan=[0 F.r{1,1}.GridVectors{1}(end)];
@@ -76,7 +72,7 @@ vw = [0; 0 ;0];  % Wind velocity
 
 % ~~~~~  Inputs ended ~~~~~~
 % Everything else remains same except what needs to be plotted
-% ^ Add RIS aero data through force_aero_load or directly to aero data of RLV
+% ^ Add RIS aero data through force_aero_load or directly to aero data of W
 % ^^ currently RIS data has been added separately in force_aero_load
 % %% Intermediate plotting for checking solution while solving
 % global PLT;
@@ -268,7 +264,7 @@ global PLT
 % % ^ 'drawnow limitrate' gives faster performance but is only available in 2016 i think
 
 
-% Writing the state variables in two body form ( Helicopter and RLV)
+% Writing the state variables in two body form ( Body and W)
 r=[F.r{1}(t);F.r{2}(t);F.r{3}(t);z(7:9);F.r{4}(t);F.r{5}(t);F.r{6}(t);z(10:12)];
 v=[F.v{1}(t);F.v{2}(t);F.v{3}(t);z(1:3);F.v{4}(t);F.v{5}(t);F.v{6}(t);z(4:6)];
 a_hel=[F.a{1}(t);
@@ -335,15 +331,15 @@ function [T,WI,K_N,phc] = trsfm(r,Ra,t)
 % trsfm -> contains all the transformation between reference frames
 % T.BN(i) -> Transforms from inertial frame to i-th body frame.
 % T.NB(i) -> inverse of T.BN(i) i.e. transformation from i-th body frame to inertial frame
-% i = 1 -> Helicopter
-%   = 2 -> RLV
+% i = 1 -> Body
+%   = 2 -> W
 %   = 3 -> Cable (well, cable is not a body but transformation to that frame is required)
 %
 % WI(i) -> Transformation from body rates and Euler angle rates for i-th body
 % W(i)  -> Transformation from Euler angle rates to body rates for i-th body
 %
 % K_N -> Cable direction vector in inertial frame
-%        (along the cable from helicopter attachement point to RLV attachment point)
+%        (along the cable from helicopter attachement point to W attachment point)
 %
 %
 
